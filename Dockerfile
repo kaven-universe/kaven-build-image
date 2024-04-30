@@ -4,7 +4,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0
 # Environment variables
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 ENV PATH="/root/.dotnet/tools:${PATH}"
-ENV PATH="/usr/local/bin/gh:${PATH}"
+ENV PATH="/usr/local/bin/gh/bin:${PATH}"
 
 # Install Docker, development tools, and GitHub CLI in a single layer
 RUN curl -fsSL https://get.docker.com -o get-docker.sh \
@@ -21,6 +21,7 @@ RUN curl -fsSL https://get.docker.com -o get-docker.sh \
     && curl -L $latest_release_url -o /tmp/gh.tar.gz \
     && mkdir -p /usr/local/bin/gh \
     && tar -xzf /tmp/gh.tar.gz -C /usr/local/bin/gh --strip-components=1 \
+    && chmod +x /usr/local/bin/gh/bin/gh \
     && rm /tmp/gh.tar.gz
 
 # Verify installations and versions
