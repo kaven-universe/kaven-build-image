@@ -16,7 +16,7 @@ RUN curl -fsSL https://get.docker.com -o get-docker.sh \
     && apt-get install -y build-essential libvips-dev git jq \
     && dotnet tool install --global KCmd \
     # Node.js
-    && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
+    && curl -sL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
     && apt-get clean \
     && npm install -g pnpm \

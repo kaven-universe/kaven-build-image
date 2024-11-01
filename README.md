@@ -8,7 +8,7 @@ This Docker project contains a Dockerfile that builds a Docker image with the fo
 
 * .NET SDK LTS(8.0)
 * Docker CLI
-* Node.js LTS(20.x)
+* Node.js LTS(22.x)
 * GitHub CLI
 * Other development tools
 
