@@ -8,26 +8,31 @@ ENV PATH="${PNPM_HOME}:${PATH}"
 ENV PATH="/root/.dotnet/tools:${PATH}"
 ENV PATH="/usr/local/bin/gh/bin:${PATH}"
 
-# Install Docker, development tools, and GitHub CLI in a single layer
-RUN curl -fsSL https://get.docker.com -o get-docker.sh \
+# Install Docker, development tools, GitHub CLI, Node.js, and acme.sh in a single layer
+RUN apt-get -y update \
+    && apt-get install -y git jq nano build-essential libvips-dev \
+    # Docker
+    && curl -fsSL https://get.docker.com -o get-docker.sh \
     && sh get-docker.sh \
     && rm get-docker.sh \
-    && apt-get -y update \
-    && apt-get install -y build-essential libvips-dev git jq \
+    # .NET tool
     && dotnet tool install --global KCmd \
-    # Node.js
-    && curl -sL https://deb.nodesource.com/setup_22.x | bash - \
+    # Node.js & pnpm
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
-    && apt-get clean \
     && npm install -g pnpm \
-    && pnpm add --global kaven-utils \
+    && pnpm add -g kaven-utils \
     # GitHub CLI
-    && latest_release_url=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | jq -r '.assets[] | select(.name | endswith("linux_amd64.tar.gz")) | .browser_download_url') \
-    && curl -L $latest_release_url -o /tmp/gh.tar.gz \
+    && latest_release_url=$(curl -s https://api.github.com/repos/cli/cli/releases/latest \
+        | jq -r '.assets[] | select(.name | test("linux_amd64.tar.gz$")) | .browser_download_url') \
+    && curl -fsSL $latest_release_url -o /tmp/gh.tar.gz \
     && mkdir -p /usr/local/bin/gh \
     && tar -xzf /tmp/gh.tar.gz -C /usr/local/bin/gh --strip-components=1 \
     && chmod +x /usr/local/bin/gh/bin/gh \
-    && rm /tmp/gh.tar.gz
+    && rm /tmp/gh.tar.gz \
+    # Cleanup
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Verify installations and versions
 RUN echo 'dotnet version:' $(dotnet --version) \
