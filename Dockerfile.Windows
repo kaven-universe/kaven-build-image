@@ -1,0 +1,57 @@
+# escape=`
+
+# Base image: .NET SDK on Windows Server Core
+FROM mcr.microsoft.com/dotnet/sdk:8.0-windowsservercore-ltsc2022
+
+# Use cmd shell for correct batch processing
+SHELL ["cmd", "/S", "/C"]
+
+# Environment variables
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ENV PNPM_HOME="C:\\pnpm"
+ENV PATH="%PNPM_HOME%;C:\\Users\\ContainerAdministrator\\.dotnet\\tools;%PATH%"
+ENV VS_BUILDTOOLS_PATH="%ProgramFiles(x86)%\\Microsoft Visual Studio\\2022\\BuildTools"
+
+# Install Visual Studio Build Tools
+RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe `
+    && (start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
+        --installPath "%VS_BUILDTOOLS_PATH%" `
+        --add Microsoft.VisualStudio.Workload.AzureBuildTools `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
+        --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
+        --remove Microsoft.VisualStudio.Component.Windows81SDK `
+        || IF "%ERRORLEVEL%"=="3010" EXIT 0) `
+    && del /q vs_buildtools.exe
+
+# Add MSBuild and VC++ tools to PATH
+ENV PATH="%VS_BUILDTOOLS_PATH%\\MSBuild\\Current\\Bin;%VS_BUILDTOOLS_PATH%\\VC\\Tools\\MSVC\\14.*/bin/Hostx64/x64;%PATH%"
+
+# Install Chocolatey and common tools
+RUN powershell -NoProfile -ExecutionPolicy Bypass -Command `
+    Set-ExecutionPolicy Bypass -Scope Process -Force; `
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
+    iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')) `
+    && choco install -y git jq nano nodejs-lts docker-cli gh python `
+    && npm install -g pnpm `
+    && pnpm add -g kaven-utils `
+    && dotnet tool install --global KCmd `
+    && dotnet tool install --global wix `
+    && rmdir /s /q C:\\ProgramData\\chocolatey\\lib `
+    && rmdir /s /q C:\\ProgramData\\chocolatey\\cache
+
+# Verify installations and versions
+RUN echo dotnet version: & dotnet --version ^
+    && echo kcmd: & kcmd where ^
+    && echo docker version: & docker -v ^
+    && echo node version: & node -v ^
+    && echo npm version: & npm -v ^
+    && echo pnpm version: & pnpm -v ^
+    && echo ku version: & ku -v ^
+    && echo python version: & python --version ^
+    && echo wix version: & wix --version ^
+    && echo git version: & git --version ^
+    && echo GitHub CLI version: & gh --version
+
+# Set entry point to launch VS Developer Command Prompt + PowerShell
+ENTRYPOINT ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\Tools\\VsDevCmd.bat", "&&", "powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]

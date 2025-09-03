@@ -1,4 +1,4 @@
-name: Build docker images
+name: Build Windows Docker Images
 
 on:
   push:
@@ -7,50 +7,46 @@ on:
   workflow_dispatch:
 
 jobs:
-  multi-registries:
-    runs-on: ubuntu-22.04
+  build-windows-image:
+    runs-on: windows-2022
+
     steps:
+      # Get current date/time for tag
       - name: Get current date
         id: current_date_time
         uses: kaven-universe/github-action-current-date-time@v1
         with:
           format: "YYYYMMDDHHmmss"
-      
+
+      # Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Generate Docker metadata (tags & labels)
       - name: Docker meta
         id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v5
         with:
           images: |
-            kavenzero/${{ github.event.repository.name }}
-            ghcr.io/${{ github.repository }}
+            kavenzero/${{ github.event.repository.name }}-windows
+            ghcr.io/${{ github.repository }}-windows
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=${{ steps.current_date_time.outputs.time }}
             type=raw,value=latest
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
+      # Setup Docker Buildx
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3            
 
-      # - name: Cache Docker layers
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: /tmp/.buildx-cache
-      #     key: ${{ runner.os }}-buildx-${{ github.sha }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-buildx-
-
+      # Login to DockerHub
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USER  }}
+          username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Login to GitHub Container Registry
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -58,14 +54,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      # Build and push Windows Docker image
+      - name: Build and push Windows image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
+          file: ./Dockerfile.Windows
+          platforms: windows/amd64
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
-          # cache-from: type=local,src=/tmp/.buildx-cache
-          # cache-to: type=local,dest=/tmp/.buildx-cache
+          # Optional: enable layer cache if needed
+          # cache-from: type=registry,ref=kavenzero/${{ github.event.repository.name }}-windows:cache
+          # cache-to: type=registry,ref=kavenzero/${{ github.event.repository.name }}-windows:cache,mode=max
