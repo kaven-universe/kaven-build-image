@@ -1,5 +1,5 @@
 # Base image: .NET SDK
-FROM mcr.microsoft.com/dotnet/sdk:8.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0
 
 # Environment variables
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
@@ -18,7 +18,7 @@ RUN apt-get -y update \
     # .NET tool
     && dotnet tool install --global KCmd \
     # Node.js & pnpm
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g pnpm \
     && pnpm add -g kaven-utils \
