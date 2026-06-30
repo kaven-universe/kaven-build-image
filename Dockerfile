@@ -4,7 +4,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0
 # Environment variables
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 ENV PNPM_HOME="/root/pnpm"
-ENV PATH="${PNPM_HOME}:${PATH}"
+ENV PATH="${PNPM_HOME}/bin:${PATH}"
 ENV PATH="/root/.dotnet/tools:${PATH}"
 ENV PATH="/usr/local/bin/gh/bin:${PATH}"
 
