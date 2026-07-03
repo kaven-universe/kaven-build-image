@@ -36,7 +36,7 @@ RUN apt-get -y update \
 
 # Verify installations and versions
 RUN echo 'dotnet version:' $(dotnet --version) \
-    && echo 'kcmd:' $(kcmd where) \
+    && echo 'kcmd:' $(kcmd version) \
     && echo 'docker version:' $(docker -v) \
     && echo 'node version:' $(node -v) \
     && echo 'npm version:' $(npm -v) \
